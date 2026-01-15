@@ -48,9 +48,10 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
         SECRET_KEY: test-secret-key
+        DEBUG: 'True'
       run: |
         cd backend
-        python manage.py migrate
+        python manage.py migrate --noinput
 
     - name: Run tests
       env:
@@ -61,9 +62,10 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
         SECRET_KEY: test-secret-key
+        DEBUG: 'True'
       run: |
         cd backend
-        python manage.py test
+        python manage.py test --noinput
 
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
