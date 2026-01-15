@@ -33,4 +33,4 @@ class UsersModelsTestCase(TestCase):
             first_name='John',
             last_name='Doe'
         )
-        self.assertEqual(str(user), 'johndoe')
+        self.assertEqual(str(user), 'john@example.com')
