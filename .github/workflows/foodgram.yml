@@ -114,10 +114,43 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
+          # Создаем директорию если нет
+          mkdir -p ~/foodgram
           cd ~/foodgram
-          git pull origin main
+          
+          # Клонируем или обновляем репозиторий
+          if [ ! -d ".git" ]; then
+            git clone https://github.com/KristianIovu/foodgram.git .
+          else
+            git pull origin main
+          fi
+          
           cd infra
+          
+          # Создаем .env.prod файл если нет
+          if [ ! -f ".env.prod" ]; then
+            cat > .env.prod << 'ENVEOF'
+POSTGRES_DB=foodgram
+POSTGRES_USER=foodgram_user
+POSTGRES_PASSWORD=$(openssl rand -base64 32)
+DB_HOST=db
+DB_PORT=5432
+SECRET_KEY=$(openssl rand -base64 64)
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1,158.160.23.227
+DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+ENVEOF
+          fi
+          
+          # Запускаем проект
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d
-          ./start.sh
+          
+          # Ждем запуска и выполняем миграции
+          sleep 10
+          docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+          docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+          docker compose -f docker-compose.prod.yml exec -T backend python manage.py load_ingredients --path /app/data/ingredients.json
+          
+          echo "Деплой завершен! Проект доступен по http://158.160.23.227"
