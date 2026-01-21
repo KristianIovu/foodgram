@@ -1,12 +1,18 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-from .views import UserViewSet
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
-router = DefaultRouter()
-router.register('users', UserViewSet, basename='users')
+User = get_user_model()
 
-urlpatterns = [
-    path('', include(router.urls)),
-    path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.authtoken')),
-]
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("email", "id", "username", "first_name", "last_name")
+
+class CustomUserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    class Meta:
+        model = User
+        fields = ("id", "email", "username", "first_name", "last_name", "password")
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
