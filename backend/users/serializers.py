@@ -1,34 +1,22 @@
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from djoser.serializers import SetPasswordSerializer
+from djoser.serializers import UserCreateSerializer
+from rest_framework import serializers
+from rest_framework.validators import ValidationError
 
 User = get_user_model()
 
+class CustomUserCreateSerializer(UserCreateSerializer):
+    password2 = serializers.CharField(write_only=True, required=True)
 
-class UserCreateSerializer(BaseUserCreateSerializer):
-    """Кастомный сериализатор регистрации без password2"""
-
-    class Meta(BaseUserCreateSerializer.Meta):
+    class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'username',
-                 'first_name', 'last_name', 'password')
+        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'password', 'password2')
 
     def validate(self, attrs):
-        # Убираем проверку password2
+        if attrs['password'] != attrs['password2']:
+            raise ValidationError({"password2": "Passwords must match."})
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
-        )
-        return user
-
-
-class UserPasswordSerializer(SetPasswordSerializer):
-    """Сериализатор для смены пароля"""
-    pass
+        validated_data.pop('password2')
+        return super().create(validated_data)
