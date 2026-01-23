@@ -29,7 +29,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         required=True,
         validators=[validate_password]
     )
-    password2 = serializers.CharField(write_only=True, required=True)
+    # 1. Делаем поле НЕобязательным (required=False)
+    password2 = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -42,14 +43,20 @@ class UserCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
+        # 2. Проверяем совпадение, только если пароль пришел (для тестов/curl)
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        
+        if password2 and password != password2:
             raise serializers.ValidationError(
-                {'password': 'Пароли не совпадают'}
+                {'password2': 'Пароли не совпадают'}
             )
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('password2')
+        # 3. Безопасно удаляем password2, если оно есть
+        validated_data.pop('password2', None)
+        # create_user захеширует пароль корректно
         user = User.objects.create_user(**validated_data)
         return user
 
