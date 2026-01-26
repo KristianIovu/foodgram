@@ -16,7 +16,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Follow
-        fields = ('id', 'email', 'username', 'first_name', 
+        fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'recipes_count', 'recipes')
 
     def get_recipes_count(self, obj):

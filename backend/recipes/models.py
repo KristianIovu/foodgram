@@ -4,6 +4,7 @@ from django.db import models
 
 
 class Tag(models.Model):
+    """Модель тега для классификации рецепта."""
     name = models.CharField(
         'Название',
         max_length=200,
@@ -14,11 +15,11 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    
+
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
-    
+
     def __str__(self):
         return self.name
 
@@ -32,7 +33,7 @@ class Ingredient(models.Model):
         'Единица измерения',
         max_length=200,
     )
-    
+
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
@@ -42,12 +43,13 @@ class Ingredient(models.Model):
                 name='unique_ingredient'
             )
         ]
-    
+
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
 
 class Recipe(models.Model):
+    """Основная модель рецепта с полями из ТЗ."""
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -82,17 +84,18 @@ class Recipe(models.Model):
         'Дата публикации',
         auto_now_add=True,
     )
-    
+
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ['-pub_date']
-    
+
     def __str__(self):
         return self.name
 
 
 class RecipeIngredient(models.Model):
+    """Промежуточная модель для связи рецепта и ингредиента с количеством."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -109,7 +112,7 @@ class RecipeIngredient(models.Model):
         'Количество',
         validators=[MinValueValidator(1)]
     )
-    
+
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецептах'
@@ -119,12 +122,13 @@ class RecipeIngredient(models.Model):
                 name='unique_recipe_ingredient'
             )
         ]
-    
+
     def __str__(self):
         return f'{self.ingredient} - {self.amount}'
 
 
 class Favorite(models.Model):
+    """Модель для хранения избранных рецептов пользователя."""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -137,7 +141,7 @@ class Favorite(models.Model):
         related_name='favorites',
         verbose_name='Рецепт',
     )
-    
+
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
@@ -147,12 +151,13 @@ class Favorite(models.Model):
                 name='unique_favorite'
             )
         ]
-    
+
     def __str__(self):
         return f'{self.user} -> {self.recipe}'
 
 
 class ShoppingCart(models.Model):
+    """Модель для хранения рецептов в списке покупок пользователя."""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -162,10 +167,10 @@ class ShoppingCart(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shopping_cart',
+        related_name='in_carts',
         verbose_name='Рецепт',
     )
-    
+
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
@@ -175,6 +180,6 @@ class ShoppingCart(models.Model):
                 name='unique_shopping_cart'
             )
         ]
-    
+
     def __str__(self):
         return f'{self.user} -> {self.recipe}'

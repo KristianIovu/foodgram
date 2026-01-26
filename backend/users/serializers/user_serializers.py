@@ -9,7 +9,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 
+        fields = ('id', 'email', 'username',
                   'first_name', 'last_name', 'password')
         extra_kwargs = {
             'password': {'write_only': True},
@@ -34,7 +34,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 
+        fields = ('email', 'username', 'first_name',
                   'last_name', 'password', 'password2')
         extra_kwargs = {
             'email': {'required': True},
@@ -46,7 +46,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         # 2. Проверяем совпадение, только если пароль пришел (для тестов/curl)
         password = attrs.get('password')
         password2 = attrs.get('password2')
-        
+
         if password2 and password != password2:
             raise serializers.ValidationError(
                 {'password2': 'Пароли не совпадают'}
