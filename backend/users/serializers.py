@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from recipes.serializers.recipe_serializers import Base64ImageField, ShortRecipeSerializer
+from recipes.serializers.recipe_serializers import (Base64ImageField,
+                                                    ShortRecipeSerializer)
 
 from .models import Follow
 
@@ -25,7 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации новых пользователей."""
-    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password = serializers.CharField(write_only=True,
+                                     validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=False)
     avatar = Base64ImageField(source='image', required=False, allow_null=True)
 
@@ -48,7 +50,9 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         """Проверяет соответсвие паролей."""
         password2 = attrs.get('password2')
         if password2 and attrs['password'] != password2:
-            raise serializers.ValidationError({'password2': 'Пароли не совпадают'})
+            raise serializers.ValidationError(
+                {'password2': 'Пароли не совпадают'}
+            )
         return attrs
 
     def create(self, validated_data):
@@ -64,7 +68,8 @@ class FollowSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='author.username')
     first_name = serializers.ReadOnlyField(source='author.first_name')
     last_name = serializers.ReadOnlyField(source='author.last_name')
-    avatar = Base64ImageField(source='author.image', required=False, allow_null=True)
+    avatar = Base64ImageField(source='author.image', required=False,
+                              allow_null=True)
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
 

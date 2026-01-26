@@ -81,7 +81,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания и обновления рецептов (POST/PATCH-запросы.)"""
+    """Создание и обновление рецептов (POST/PATCH-запросы.)"""
 
     ingredients = RecipeIngredientSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
