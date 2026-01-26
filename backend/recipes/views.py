@@ -17,12 +17,11 @@ from .models import (
     ShoppingCart
 )
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (
-    TagSerializer,
-    IngredientSerializer,
+from .serializers.base_serializers import TagSerializer, IngredientSerializer
+from .serializers.recipe_serializers import (
     RecipeReadSerializer,
     RecipeWriteSerializer,
-    ShortRecipeSerializer
+    ShortRecipeSerializer,
 )
 
 

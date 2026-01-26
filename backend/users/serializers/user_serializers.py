@@ -7,6 +7,7 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения данных пользователя."""
     class Meta:
         model = User
         fields = ('id', 'email', 'username',
@@ -24,12 +25,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для регистрации новых пользователей."""
     password = serializers.CharField(
         write_only=True,
         required=True,
         validators=[validate_password]
     )
-    # 1. Делаем поле НЕобязательным (required=False)
     password2 = serializers.CharField(write_only=True, required=False)
 
     class Meta:
@@ -43,7 +44,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        # 2. Проверяем совпадение, только если пароль пришел (для тестов/curl)
+        """Проверяет соответсвие паролей."""
         password = attrs.get('password')
         password2 = attrs.get('password2')
 
@@ -54,14 +55,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # 3. Безопасно удаляем password2, если оно есть
+        """Создает нового пользователя."""
         validated_data.pop('password2', None)
-        # create_user захеширует пароль корректно
         user = User.objects.create_user(**validated_data)
         return user
 
 
 class UserPasswordSerializer(serializers.Serializer):
+    """Сериализатор для смены пароля пользователя."""
     new_password = serializers.CharField(
         required=True,
         validators=[validate_password]
@@ -69,12 +70,14 @@ class UserPasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
 
     def validate_current_password(self, value):
+        """Проверка правильности пароля пользователя."""
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError('Текущий пароль неверен')
         return value
 
     def save(self, **kwargs):
+        """Сохраняет новый пароль пользователя."""
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save()

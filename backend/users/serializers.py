@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from recipes.serializers.recipe_serializers import Base64ImageField
+from recipes.serializers.recipe_serializers import Base64ImageField, ShortRecipeSerializer
 
 from .models import Follow
 
@@ -85,7 +85,6 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         """Возвращает последние 3 рецепта автора."""
-        from recipes.serializers import ShortRecipeSerializer
         recipes = obj.author.recipes.all()[:3]
         return ShortRecipeSerializer(recipes, many=True).data
 
