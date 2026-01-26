@@ -1,10 +1,13 @@
 import csv
 import json
+
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient
 
 
 class Command(BaseCommand):
+    """Команда для загрузки ингредиентов из файлов."""
     help = 'Загрузка ингредиентов из CSV или JSON файла'
 
     def add_arguments(self, parser):
@@ -29,7 +32,9 @@ class Command(BaseCommand):
             self.load_from_json(path)
         else:
             self.stdout.write(
-                self.style.ERROR('Формат файла не поддерживается. Используйте .csv или .json')
+                self.style.ERROR(
+                    'Формат файла не поддерживается. Используй .csv или .json'
+                    )
             )
 
     def load_from_csv(self, path):
