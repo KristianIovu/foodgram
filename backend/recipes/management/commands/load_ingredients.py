@@ -34,7 +34,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.ERROR(
                     'Формат файла не поддерживается. Используй .csv или .json'
-                    )
+                )
             )
 
     def load_from_csv(self, path):
