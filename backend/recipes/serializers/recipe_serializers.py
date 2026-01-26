@@ -16,7 +16,8 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith("data:image"):
             format, imgstr = data.split(";base64,")
             ext = format.split("/")[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f"{uuid.uuid4()}.{ext}")
+            data = ContentFile(base64.b64decode(imgstr),
+                               name=f"{uuid.uuid4()}.{ext}")
         return super().to_internal_value(data)
 
 
@@ -66,7 +67,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return False
 
     def get_is_in_shopping_cart(self, obj):
-        """Проверить, добавлен ли рецепт в список покупок текущим пользователем."""
+        """Проверка, добавлен ли рецепт в список покупок текущим польз."""
         user = self.context.get('request').user
         if user.is_authenticated:
             return user.shopping_cart.filter(recipe=obj).exists()
