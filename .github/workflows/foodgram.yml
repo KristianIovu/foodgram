@@ -101,42 +101,34 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
 
   deploy:
-    runs-on: ubuntu-latest
-    needs: build_and_push_to_docker_hub
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  runs-on: ubuntu-latest
+  needs: build_and_push_to_docker_hub
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        script: |
-          mkdir -p ~/foodgram
-          cd ~/foodgram
-          
-          if [ ! -d ".git" ]; then
-            git clone https://github.com/KristianIovu/foodgram.git .
-          else
-            git pull origin main
-          fi
-          
-          cd infra
-          
-          if [ ! -f "docker-compose.yml" ]; then
-            echo "ERROR: docker-compose.yml не найден!"
-            ls -la
-            exit 1
-          fi
-          
-          docker-compose down
-          docker-compose build --no-cache
-          docker-compose up -d
-          
-          sleep 15
-          docker-compose exec -T backend python manage.py migrate --noinput
-          docker-compose exec -T backend python manage.py collectstatic --noinput
-          
-          echo "✅ Деплой завершен! Проект доступен по http://158.160.23.227"
+  steps:
+  - name: Deploy to server
+    uses: appleboy/ssh-action@v1.0.0
+    with:
+      host: ${{ secrets.HOST }}
+      username: ${{ secrets.USERNAME }}
+      key: ${{ secrets.SSH_KEY }}
+      passphrase: ${{ secrets.SSH_PASSPHRASE }}
+      script: |
+        # Переходим в папку проекта
+        cd ~/foodgram
+        
+        # Обновляем код
+        git pull origin main
+        
+        # Переходим в infra и перезапускаем контейнеры
+        cd infra
+        docker-compose down
+        docker-compose build --no-cache
+        docker-compose up -d
+        
+        # Миграции и статика
+        sleep 15
+        docker-compose exec -T backend python manage.py migrate --noinput
+        docker-compose exec -T backend python manage.py collectstatic --noinput
+        
+        echo "✅ Деплой завершен! Проект доступен по http://158.160.23.227"
