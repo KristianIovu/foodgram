@@ -41,7 +41,6 @@ class UserViewSet(DjoserUserViewSet):
         url_path='me/avatar',
         permission_classes=[IsAuthenticated]
     )
-
     def avatar(self, request):
         """Загружает/удаляет аватар текущего пользователя."""
         user = request.user

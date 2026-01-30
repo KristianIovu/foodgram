@@ -30,7 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Follow.objects.filter(
-                user=request.user, 
+                user=request.user,
                 author=obj
             ).exists()
         return False
@@ -117,7 +117,7 @@ class FollowSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         recipes_limit = (
             request.query_params.get('recipes_limit')
-            if request 
+            if request
             else None
         )
 
@@ -131,6 +131,7 @@ class FollowSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Всегда True, т.к. это serializer для подписок."""
         return True
+
 
 class UserPasswordSerializer(serializers.Serializer):
     """Сериализатор для смены пароля."""

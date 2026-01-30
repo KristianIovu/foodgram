@@ -22,7 +22,6 @@ class Tag(models.Model):
         unique=True
     )
 
-
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
