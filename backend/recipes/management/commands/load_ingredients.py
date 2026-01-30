@@ -43,5 +43,7 @@ class Command(BaseCommand):
             )
         except json.JSONDecodeError:
             self.stdout.write(
-                self.style.ERROR(f'Файл {file_path} содержит некорректный JSON')
+                self.style.ERROR
+                (
+                    f'Файл {file_path} содержит некорректный JSON')
             )
