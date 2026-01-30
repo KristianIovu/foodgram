@@ -13,6 +13,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения данных пользователя."""
     avatar = Base64ImageField(source='image', required=False, allow_null=True)
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -21,7 +22,18 @@ class UserSerializer(serializers.ModelSerializer):
                   'username',
                   'first_name',
                   'last_name',
-                  'avatar')
+                  'avatar',
+                  'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        """Проверяет, подписан ли текущий пользователь на автора (obj)."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(
+                user=request.user, 
+                author=obj
+            ).exists()
+        return False
 
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
@@ -29,11 +41,15 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True,
                                      validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=False)
-    avatar = Base64ImageField(source='image', required=False, allow_null=True)
+    avatar = Base64ImageField(source='image',
+                              required=False,
+                              allow_null=True,
+                              write_only=True)
 
     class Meta:
         model = User
         fields = ('email',
+                  'id',
                   'username',
                   'first_name',
                   'last_name',
@@ -47,7 +63,7 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        """Проверяет соответсвие паролей."""
+        """Проверяет соответствие паролей, если password2 предоставлен."""
         password2 = attrs.get('password2')
         if password2 and attrs['password'] != password2:
             raise serializers.ValidationError(
@@ -60,6 +76,12 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         validated_data.pop('password2', None)
         return User.objects.create_user(**validated_data)
 
+    def to_representation(self, instance):
+        """Возвращаем представление без поля avatar."""
+        representation = super().to_representation(instance)
+        representation.pop('avatar', None)
+        return representation
+
 
 class FollowSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения подписок с рецептами авторов."""
@@ -70,6 +92,7 @@ class FollowSerializer(serializers.ModelSerializer):
     last_name = serializers.ReadOnlyField(source='author.last_name')
     avatar = Base64ImageField(source='author.image', required=False,
                               allow_null=True)
+    is_subscribed = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
 
@@ -81,6 +104,7 @@ class FollowSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'avatar',
+                  'is_subscribed',
                   'recipes_count',
                   'recipes')
 
@@ -89,10 +113,24 @@ class FollowSerializer(serializers.ModelSerializer):
         return obj.author.recipes.count()
 
     def get_recipes(self, obj):
-        """Возвращает последние 3 рецепта автора."""
-        recipes = obj.author.recipes.all()[:3]
+        """Возвращает рецепты автора с учётом параметра recipes_limit."""
+        request = self.context.get('request')
+        recipes_limit = (
+            request.query_params.get('recipes_limit')
+            if request 
+            else None
+        )
+
+        recipes = obj.author.recipes.all()
+        if recipes_limit and recipes_limit.isdigit():
+            recipes = recipes[:int(recipes_limit)]
+        else:
+            recipes = recipes[:3]
         return ShortRecipeSerializer(recipes, many=True).data
 
+    def get_is_subscribed(self, obj):
+        """Всегда True, т.к. это serializer для подписок."""
+        return True
 
 class UserPasswordSerializer(serializers.Serializer):
     """Сериализатор для смены пароля."""
@@ -119,8 +157,19 @@ class UserPasswordSerializer(serializers.Serializer):
 
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для обновления аватара пользователя."""
-    avatar = Base64ImageField(source='image', required=False, allow_null=True)
+    avatar = Base64ImageField(source='image')
 
     class Meta:
         model = User
         fields = ('avatar',)
+
+    def validate(self, attrs):
+        """Проверяем, что поле avatar присутствует в данных."""
+        if 'image' not in attrs:
+            raise serializers.ValidationError(
+                {'avatar': ['Это поле обязательно.']}
+            )
+        return attrs
+
+    def to_representation(self, instance):
+        return {"avatar": instance.image.url if instance.image else None}

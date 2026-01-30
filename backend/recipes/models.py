@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls import reverse
 
 
 class Tag(models.Model):
@@ -15,6 +16,12 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
+    color = models.CharField(
+        'Цвет',
+        max_length=7,
+        unique=True
+    )
+
 
     class Meta:
         verbose_name = 'Тег'
@@ -92,6 +99,9 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('recipes-detail', kwargs={'pk': self.pk})
 
 
 class RecipeIngredient(models.Model):

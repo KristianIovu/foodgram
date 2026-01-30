@@ -4,6 +4,7 @@ import uuid
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from recipes.models import Ingredient
 from ..models import Recipe, RecipeIngredient, Tag
 from .base_serializers import TagSerializer
 
@@ -103,6 +104,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         1. Наличие хотя бы одного ингредиента
         2. Отсутствие дубликатов ингредиентов
         3. Корректность количества (не менее 1)
+        4. Существование ингредиентов в базе данных
         """
         if not value:
             raise serializers.ValidationError(
@@ -110,6 +112,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
 
         ingredient_ids = [item['ingredient']['id'] for item in value]
+
+        # Проверка существования ингредиентов в базе
+        existing_ids = set(
+            Ingredient.objects.filter(id__in=ingredient_ids)
+            .values_list('id', flat=True)
+        )
+        missing_ids = set(ingredient_ids) - existing_ids
+        if missing_ids:
+            raise serializers.ValidationError(
+                f'Ингредиенты с ID {missing_ids} не существуют'
+            )
+
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 'Ингредиенты не должны повторяться'
@@ -177,18 +191,24 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Обновить существующий рецепт."""
-        ingredients = validated_data.pop('ingredients', None)
-        tags = validated_data.pop('tags', None)
+        if 'ingredients' not in validated_data:
+            raise serializers.ValidationError(
+                {'ingredients': ['Это поле обязательно.']}
+            )
+        if 'tags' not in validated_data:
+            raise serializers.ValidationError(
+                {'tags': ['Это поле обязательно.']}
+            )
+
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        if tags is not None:
-            instance.tags.set(tags)
-
-        if ingredients is not None:
-            instance.recipe_ingredients.all().delete()
-            self.create_ingredients(instance, ingredients)
+        instance.tags.set(tags)
+        instance.recipe_ingredients.all().delete()
+        self.create_ingredients(instance, ingredients)
 
         instance.save()
         return instance

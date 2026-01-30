@@ -4,7 +4,8 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from .filters import RecipeFilter
@@ -58,7 +59,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
 
     def get_serializer_class(self):
         """Выбирает сериализатор в зависимости от действия."""
@@ -80,7 +81,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            # Проверяет, не добавлен ли уже рецепт в избранное
             if Favorite.objects.filter(
                 user=request.user,
                 recipe=recipe
@@ -89,12 +89,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            # Добавляет в избранное
             Favorite.objects.create(user=request.user, recipe=recipe)
             serializer = ShortRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        # Удаляет из избранного
         favorite = Favorite.objects.filter(user=request.user, recipe=recipe)
         if not favorite.exists():
             return Response(
@@ -115,7 +113,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            # Проверяет не добавлен ли рецепт уже в список покупок
             if ShoppingCart.objects.filter(
                 user=request.user,
                 recipe=recipe
@@ -124,12 +121,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт уже в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            # Добавляет в список покупок
             ShoppingCart.objects.create(user=request.user, recipe=recipe)
             serializer = ShortRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        # Удаляет из списка покупок
         shopping_cart = ShoppingCart.objects.filter(
             user=request.user,
             recipe=recipe
@@ -152,7 +147,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Скачивает текстовый файл со списком покупок."""
         user = request.user
 
-        # Получаем все ингредиенты из списка покупок пользователя
         ingredients = RecipeIngredient.objects.filter(
             recipe__in_carts__user=user
         ).values(
@@ -162,7 +156,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             total_amount=Sum('amount')
         ).order_by('ingredient__name')
 
-        # Формируем текстовый файл
         shopping_list = []
         shopping_list.append('Список покупок\n')
         shopping_list.append('=' * 50 + '\n')
@@ -176,7 +169,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_list.append('\n' + '=' * 50)
         shopping_list.append('\nПриятного аппетита!')
 
-        # Создаем HTTP-ответ с файлом
         response = HttpResponse(
             ''.join(shopping_list),
             content_type='text/plain; charset=utf-8'
@@ -186,3 +178,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
         return response
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='get-link'
+    )
+    def get_link(self, request, pk=None):
+        """Возвращает короткую ссылку на рецепт."""
+        recipe = self.get_object()
+        url = request.build_absolute_uri(recipe.get_absolute_url())
+        return Response({'short-link': url})

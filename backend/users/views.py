@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from .models import Follow
 from .serializers import (
+    AvatarSerializer,
     UserSerializer,
     FollowSerializer,
     UserPasswordSerializer
@@ -36,14 +37,30 @@ class UserViewSet(DjoserUserViewSet):
 
     @action(
         detail=False,
-        methods=['put'],
+        methods=['put', 'delete'],
         url_path='me/avatar',
         permission_classes=[IsAuthenticated]
     )
+
+    def avatar(self, request):
+        """Загружает/удаляет аватар текущего пользователя."""
+        user = request.user
+
+        if request.method == 'DELETE':
+            if getattr(user, 'avatar', None):
+                user.avatar.delete(save=True)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = AvatarSerializer(
+            user, data=request.data, partial=True, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def upload_avatar(self, request):
         """Загружает аватар пользователя."""
         user = request.user
-        from .serializers import AvatarSerializer
         serializer = AvatarSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -63,10 +80,8 @@ class UserViewSet(DjoserUserViewSet):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(
-                {'detail': 'Пароль успешно изменен'},
-                status=status.HTTP_204_NO_CONTENT
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
@@ -139,3 +154,9 @@ class UserViewSet(DjoserUserViewSet):
 
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        if self.action in ['retrieve', 'list']:
+            from rest_framework.permissions import AllowAny
+            return [AllowAny()]
+        return super().get_permissions()
