@@ -2,7 +2,7 @@
 
 **Foodgram** - это веб-приложение для публикации рецептов. Пользователи могут создавать рецепты, добавлять их в избранное и формировать список покупок.
 
-# 🌟 Функциональность
+# Функциональность
 
 ## Пользовательские возможности:
 - **Регистрация и аутентификация** пользователей
@@ -47,7 +47,7 @@
 ## Запуск через Docker (рекомендуется):
 ```bash
 # Клонирование репозитория
-git clone <repository-url>
+https://github.com/KristianIovu/foodgram.git
 cd foodgram/infra
 
 # Запуск контейнеров
@@ -57,3 +57,5 @@ docker-compose up --build
 # Frontend: http://localhost
 # API: http://localhost/api/
 # Документация API: http://localhost/api/docs/
+
+# Данные Админа: superuser@mail.ru; Super1User1
