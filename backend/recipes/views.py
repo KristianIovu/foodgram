@@ -8,7 +8,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .filters import RecipeFilter, IngredientFilter 
+from .filters import RecipeFilter, IngredientFilter
 from .models import RecipeIngredient
 from .models import (
     Recipe,
@@ -29,8 +29,10 @@ from .serializers.recipe_serializers import (
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Работа с тегами.
+
     Доступен только для чтения.
     """
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
@@ -39,8 +41,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Для работы с ингредиентами.
+
     Есть поиск по началу названия через параметр 'name'.
     """
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
@@ -50,6 +54,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Для работы с рецептами."""
+
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -66,6 +71,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def partial_update(self, request, *args, **kwargs):
+        """Частичное обновление рецепта."""
         instance = self.get_object()
 
         serializer = RecipeWriteSerializer(
@@ -90,9 +96,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                      pk,
                                      model_class,
                                      error_messages):
-        """
-        Вспомогательный метод для управления связями пользователь-рецепт.
-        """
+        """Вспомогательный метод для управления связями пользователь-рецепт."""
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
@@ -131,14 +135,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         """Удаляет или добавляет рецепт из избранного."""
         return self._manage_user_recipe_relation(
-                request=request,
-                pk=pk,
-                model_class=Favorite,
-                error_messages={
-                    'exists': 'Рецепт уже в избранном',
-                    'not_exists': 'Рецепта нет в избранном'
-                }
-            )
+            request=request,
+            pk=pk,
+            model_class=Favorite,
+            error_messages={
+                'exists': 'Рецепт уже в избранном',
+                'not_exists': 'Рецепта нет в избранном'
+            }
+        )
 
     @action(
         detail=True,
