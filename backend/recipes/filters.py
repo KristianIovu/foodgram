@@ -3,6 +3,7 @@ import django_filters
 
 from .models import Ingredient, Recipe, Tag
 
+
 class IngredientFilter(filters.FilterSet):
     """Фильтр для ингредиентов."""
 
