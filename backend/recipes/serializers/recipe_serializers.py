@@ -52,18 +52,18 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         """Проверить, добавлен ли рецепт в избранное текущим пользователем."""
         request = self.context.get('request')
         return bool(
-            request and
-            request.user.is_authenticated and
-            request.user.favorites.filter(recipe=obj).exists()
+            request
+            and request.user.is_authenticated
+            and request.user.favorites.filter(recipe=obj).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка, добавлен ли рецепт в список покупок текущим польз."""
         request = self.context.get('request')
         return bool(
-            request and
-            request.user.is_authenticated and
-            request.user.shopping_cart.filter(recipe=obj).exists()
+            request
+            and request.user.is_authenticated
+            and request.user.shopping_cart.filter(recipe=obj).exists()
         )
 
     def get_image(self, obj):
