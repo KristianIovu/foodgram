@@ -3,15 +3,14 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from .models import Follow
 from .serializers import (
     AvatarSerializer,
     UserSerializer,
-    FollowSerializer,
-    UserPasswordSerializer
+    FollowSerializer
 )
 
 User = get_user_model()
@@ -24,6 +23,7 @@ class UserViewSet(DjoserUserViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
     @action(
         detail=False,
@@ -46,8 +46,10 @@ class UserViewSet(DjoserUserViewSet):
         user = request.user
 
         if request.method == 'DELETE':
-            if getattr(user, 'avatar', None):
-                user.avatar.delete(save=True)
+            if user.avatar:
+                user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=['avatar'])
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = AvatarSerializer(
@@ -56,35 +58,6 @@ class UserViewSet(DjoserUserViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def upload_avatar(self, request):
-        """Загружает аватар пользователя."""
-        user = request.user
-        serializer = AvatarSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(
-        detail=False,
-        methods=['post'],
-        permission_classes=[IsAuthenticated]
-    )
-    def set_password(self, request):
-        """Изменяет пароль текущего пользователя."""
-        serializer = UserPasswordSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
 
     @action(
         detail=False,
@@ -95,8 +68,8 @@ class UserViewSet(DjoserUserViewSet):
         """
         Возвращает список подписок текущего пользователя с рецептами авторов.
         """
-        follows = Follow.objects.filter(user=request.user)
-        page = self.paginate_queryset(follows)
+        authors = User.objects.filter(following__user=request.user)
+        page = self.paginate_queryset(authors)
         if page is not None:
             serializer = FollowSerializer(
                 page,
@@ -106,7 +79,7 @@ class UserViewSet(DjoserUserViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = FollowSerializer(
-            follows,
+            authors,
             many=True,
             context={'request': request}
         )
@@ -128,34 +101,33 @@ class UserViewSet(DjoserUserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if Follow.objects.filter(
+            follow, created = Follow.objects.get_or_create(
                 user=request.user,
                 author=author
-            ).exists():
+            )
+
+            if not created:
                 return Response(
                     {'errors': 'Вы уже подписаны на этого автора'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            Follow.objects.create(user=request.user, author=author)
             serializer = FollowSerializer(
-                Follow.objects.get(user=request.user, author=author),
+                author,
                 context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        follow = Follow.objects.filter(user=request.user, author=author)
-        if not follow.exists():
+        # DELETE запрос
+        deleted_count, _ = Follow.objects.filter(
+            user=request.user,
+            author=author
+        ).delete()
+
+        if deleted_count == 0:
             return Response(
                 {'errors': 'Вы не подписаны на этого автора'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def get_permissions(self):
-        if self.action in ['retrieve', 'list']:
-            from rest_framework.permissions import AllowAny
-            return [AllowAny()]
-        return super().get_permissions()

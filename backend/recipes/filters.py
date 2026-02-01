@@ -1,6 +1,15 @@
+from django_filters import rest_framework as filters
 import django_filters
 
-from .models import Recipe, Tag
+from .models import Ingredient,Recipe, Tag
+
+class IngredientFilter(filters.FilterSet):
+    """Фильтр для ингредиентов."""
+    name = filters.CharFilter(lookup_expr='istartswith')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
 
 
 class RecipeFilter(django_filters.FilterSet):
@@ -10,29 +19,22 @@ class RecipeFilter(django_filters.FilterSet):
         to_field_name='slug',
         queryset=Tag.objects.all(),
     )
-    is_favorited = django_filters.CharFilter(method='filter_favorited')
-    is_in_shopping_cart = django_filters.CharFilter(
-        method='filter_shopping_cart')
+    is_favorited = filters.BooleanFilter(method='filter_favorited')
+    is_in_shopping_cart = filters.BooleanFilter(method='filter_shopping_cart')
 
     class Meta:
         model = Recipe
         fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
 
-    def _to_bool(self, value):
-        """Преобразует строкове значение в булевое."""
-        return str(value).lower() in ('1', 'true', 'yes')
-
     def filter_favorited(self, queryset, name, value):
         """Фильтрует рецепты по признаку 'В избранном'."""
-        if self._to_bool(value) and self.request.user.is_authenticated:
+        if value and self.request.user.is_authenticated:
             return queryset.filter(favorites__user=self.request.user)
         return queryset
 
     def filter_shopping_cart(self, queryset, name, value):
         """Фильтрует рецепты по признаку 'в списке покупок'."""
         # Если пользователь не зарегистрирован, возвращаем пустой queryset
-        if self._to_bool(value) and not self.request.user.is_authenticated:
-            return queryset.none()
-        if self._to_bool(value):
+        if value and self.request.user.is_authenticated:
             return queryset.filter(in_carts__user=self.request.user)
         return queryset

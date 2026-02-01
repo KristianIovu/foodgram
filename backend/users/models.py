@@ -20,7 +20,7 @@ class User(AbstractUser):
         'last name',
         max_length=150,
     )
-    image = models.ImageField(
+    avatar = models.ImageField(
         'Аватар',
         upload_to='users/',
         blank=True,
@@ -36,7 +36,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['id']
+        ordering = ['email']
 
     def __str__(self):
         return self.email

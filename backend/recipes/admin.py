@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from .models import (Favorite,
                      Ingredient,
@@ -51,10 +52,10 @@ class RecipeAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         return queryset.select_related('author').prefetch_related('tags')
 
+    @admin.display(description='В избранном')
     def favorites_count(self, obj):
         """Количество добавлений рецепта в избранное."""
-        return obj.favorites.count()
-    favorites_count.short_description = 'В избранном'
+        return obj.favorites_count_field
 
 
 @admin.register(Favorite)
