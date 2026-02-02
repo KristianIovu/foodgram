@@ -3,6 +3,7 @@ from django.db import models
 
 from .constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
 
+
 class User(AbstractUser):
     """
     Кастомная модель пользователя.

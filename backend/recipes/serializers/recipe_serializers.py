@@ -6,6 +6,7 @@ from ..models import Recipe, RecipeIngredient, Tag
 from .base_serializers import TagSerializer
 from .fields import Base64ImageField
 
+
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для связи рецепта и ингредиента с количеством."""
 
@@ -40,7 +41,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
-    
+
     def get_fields(self):
         fields = super().get_fields()
         from users.serializers import UserSerializer

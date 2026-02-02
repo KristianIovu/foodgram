@@ -41,6 +41,8 @@ class RecipeFilter(django_filters.FilterSet):
         # Если пользователь не зарегистрирован, возвращаем пустой queryset
         if int(value) == 1:
             if self.request.user.is_authenticated:
-                return queryset.filter(shoppingcart_set__user=self.request.user)
+                return queryset.filter(
+                    shoppingcart_set__user=self.request.user
+                )
             return queryset.none()
         return queryset

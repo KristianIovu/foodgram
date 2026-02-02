@@ -146,7 +146,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         ingredients = RecipeIngredient.objects.filter(
-        recipe__shoppingcart_set__user=user
+            recipe__shoppingcart_set__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'

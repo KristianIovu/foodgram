@@ -175,7 +175,6 @@ class UserRecipeRelation(models.Model):
 class Favorite(UserRecipeRelation):
     """Модель для хранения избранных рецептов пользователя."""
 
-
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
@@ -183,7 +182,6 @@ class Favorite(UserRecipeRelation):
 
 class ShoppingCart(UserRecipeRelation):
     """Модель для хранения рецептов в списке покупок пользователя."""
-
 
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Список покупок'
