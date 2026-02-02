@@ -1,14 +1,43 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q, F
+import inspect
 
 from .constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
+
+
+def build_follow_constraints():
+    """
+    Создаёт ограничения для модели Follow
+    с учётом версии Django (check / condition).
+    """
+    expr = ~Q(user=F('author'))
+    params = inspect.signature(models.CheckConstraint).parameters
+
+    if 'check' in params:
+        check_constraint = models.CheckConstraint(
+            check=expr,
+            name='prevent_self_follow'
+        )
+    else:
+        check_constraint = models.CheckConstraint(
+            condition=expr,
+            name='prevent_self_follow'
+        )
+
+    return [
+        models.UniqueConstraint(
+            fields=['user', 'author'],
+            name='unique_follow'
+        ),
+        check_constraint,
+    ]
 
 
 class User(AbstractUser):
     """
     Кастомная модель пользователя.
-    Используется e-mail в качестве уникального индентификатора вместо username.
+    Используется email вместо username.
     """
     email = models.EmailField(
         'email address',
@@ -31,15 +60,13 @@ class User(AbstractUser):
         default=None
     )
 
-    # Используем e-mail вместо username для авторизации
     USERNAME_FIELD = 'email'
-    # Обязательные поля при создании пользователя через createsuperuser
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
+        ordering = ['email']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['email']
 
     def __str__(self):
         return self.email
@@ -47,8 +74,7 @@ class User(AbstractUser):
 
 class Follow(models.Model):
     """
-    Модель подписки пользователя на автора.
-    Пользователь подписывается на автора.
+    Подписка пользователя на автора.
     """
     user = models.ForeignKey(
         User,
@@ -66,16 +92,7 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='unique_follow'
-            ),
-            models.CheckConstraint(
-                condition=~Q(user=F('author')),
-                name='prevent_self_follow'
-            ),
-        ]
+        constraints = build_follow_constraints()
 
     def __str__(self):
         return f'{self.user} подписан на {self.author}'
