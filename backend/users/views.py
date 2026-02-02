@@ -101,7 +101,7 @@ class UserViewSet(DjoserUserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            follow, created = Follow.objects.get_or_create(
+            _, created = Follow.objects.get_or_create(
                 user=request.user,
                 author=author
             )

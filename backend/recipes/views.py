@@ -66,31 +66,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def perform_create(self, serializer):
-        """Сохраняет рецепт с указанием автора."""
-        serializer.save(author=self.request.user)
-
-    def partial_update(self, request, *args, **kwargs):
-        """Частичное обновление рецепта."""
-        instance = self.get_object()
-
-        serializer = RecipeWriteSerializer(
-            instance,
-            data=request.data,
-            partial=True,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        return Response(
-            RecipeReadSerializer(
-                instance,
-                context={'request': request}
-            ).data,
-            status=status.HTTP_200_OK
-        )
-
     def _manage_user_recipe_relation(self,
                                      request,
                                      pk,
@@ -100,7 +75,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            obj, created = model_class.objects.get_or_create(
+            _, created = model_class.objects.get_or_create(
                 user=request.user,
                 recipe=recipe
             )
@@ -171,7 +146,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         ingredients = RecipeIngredient.objects.filter(
-            recipe__in_carts__user=user
+        recipe__shoppingcart_set__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
@@ -216,3 +191,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         url = request.build_absolute_uri(recipe.get_absolute_url())
         return Response({'short-link': url})
+
+    def filter_queryset(self, queryset):
+        if self.action in ('retrieve', 'update', 'partial_update', 'destroy'):
+            return queryset
+        return super().filter_queryset(queryset)

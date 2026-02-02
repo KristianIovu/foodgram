@@ -21,8 +21,8 @@ class RecipeFilter(django_filters.FilterSet):
         to_field_name='slug',
         queryset=Tag.objects.all(),
     )
-    is_favorited = filters.BooleanFilter(method='filter_favorited')
-    is_in_shopping_cart = filters.BooleanFilter(method='filter_shopping_cart')
+    is_favorited = filters.NumberFilter(method='filter_favorited')
+    is_in_shopping_cart = filters.NumberFilter(method='filter_shopping_cart')
 
     class Meta:
         model = Recipe
@@ -30,13 +30,17 @@ class RecipeFilter(django_filters.FilterSet):
 
     def filter_favorited(self, queryset, name, value):
         """Фильтрует рецепты по признаку 'В избранном'."""
-        if value and self.request.user.is_authenticated:
-            return queryset.filter(favorites__user=self.request.user)
+        if int(value) == 1:
+            if self.request.user.is_authenticated:
+                return queryset.filter(favorite_set__user=self.request.user)
+            return queryset.none()
         return queryset
 
     def filter_shopping_cart(self, queryset, name, value):
         """Фильтрует рецепты по признаку 'в списке покупок'."""
         # Если пользователь не зарегистрирован, возвращаем пустой queryset
-        if value and self.request.user.is_authenticated:
-            return queryset.filter(in_carts__user=self.request.user)
+        if int(value) == 1:
+            if self.request.user.is_authenticated:
+                return queryset.filter(shoppingcart_set__user=self.request.user)
+            return queryset.none()
         return queryset

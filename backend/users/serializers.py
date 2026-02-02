@@ -27,10 +27,14 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверяет, подписан ли текущий пользователь на автора."""
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(user=request.user,
-                                         author=obj).exists()
-        return False
+        return bool(
+            request
+            and request.user.is_authenticated
+            and Follow.objects.filter(
+                user=request.user,
+                author=obj
+            ).exists()
+        )
 
 
 class FollowSerializer(UserSerializer):
@@ -61,10 +65,6 @@ class FollowSerializer(UserSerializer):
         else:
             recipes = recipes[:3]
         return ShortRecipeSerializer(recipes, many=True).data
-
-    def get_is_subscribed(self, obj):
-        """Всегда True, т.к. это serializer для подписок."""
-        return True
 
 
 class AvatarSerializer(serializers.ModelSerializer):

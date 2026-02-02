@@ -6,7 +6,6 @@ from ..models import Recipe, RecipeIngredient, Tag
 from .base_serializers import TagSerializer
 from .fields import Base64ImageField
 
-
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для связи рецепта и ингредиента с количеством."""
 
@@ -27,7 +26,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeReadSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения рецептов (GET - запросы.)"""
 
-    author = serializers.SerializerMethodField()
     ingredients = RecipeIngredientSerializer(
         source='recipe_ingredients',
         many=True
@@ -42,11 +40,12 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
-
-    def get_author(self, obj):
-        """Получить сериализованные данные автора рецепта."""
+    
+    def get_fields(self):
+        fields = super().get_fields()
         from users.serializers import UserSerializer
-        return UserSerializer(obj.author).data
+        fields['author'] = UserSerializer(read_only=True)
+        return fields
 
     def get_is_favorited(self, obj):
         """Проверить, добавлен ли рецепт в избранное текущим пользователем."""
@@ -54,7 +53,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return bool(
             request
             and request.user.is_authenticated
-            and request.user.favorites.filter(recipe=obj).exists()
+            and request.user.favorite_set.filter(recipe=obj).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -63,7 +62,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return bool(
             request
             and request.user.is_authenticated
-            and request.user.shopping_cart.filter(recipe=obj).exists()
+            and request.user.shoppingcart_set.filter(recipe=obj).exists()
         )
 
     def get_image(self, obj):
@@ -134,10 +133,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
         recipe = Recipe.objects.create(
             author=self.context['request'].user,
-            name=validated_data['name'],
-            text=validated_data['text'],
-            image=validated_data['image'],
-            cooking_time=validated_data['cooking_time']
+            **validated_data
         )
 
         recipe.tags.set(tags)
@@ -148,22 +144,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновить существующий рецепт."""
-        ingredients = validated_data.pop('ingredients', None)
-        tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        instance.tags.clear()
+        instance.tags.set(tags)
 
-        instance.save()
+        instance.recipe_ingredients.all().delete()
+        # Для этой связи метод clear() не работает,
+        # поэтому удаляем старые ингредиенты через delete().
+        self.create_ingredients(instance, ingredients)
 
-        if tags is not None:
-            instance.tags.set(tags)
-
-        if ingredients is not None:
-            instance.recipe_ingredients.all().delete()
-            self.create_ingredients(instance, ingredients)
-
-        return instance
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         """Вернуть данные в формате RecipeReadSerializer после сохранения."""

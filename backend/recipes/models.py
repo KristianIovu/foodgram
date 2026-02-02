@@ -175,18 +175,6 @@ class UserRecipeRelation(models.Model):
 class Favorite(UserRecipeRelation):
     """Модель для хранения избранных рецептов пользователя."""
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Пользователь',
-    )
-    recipe = models.ForeignKey(
-        'Recipe',
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Рецепт',
-    )
 
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Избранное'
@@ -196,18 +184,6 @@ class Favorite(UserRecipeRelation):
 class ShoppingCart(UserRecipeRelation):
     """Модель для хранения рецептов в списке покупок пользователя."""
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Пользователь',
-    )
-    recipe = models.ForeignKey(
-        'Recipe',
-        on_delete=models.CASCADE,
-        related_name='in_carts',
-        verbose_name='Рецепт',
-    )
 
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Список покупок'
