@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q, F
 
 from .constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
 
@@ -71,9 +72,9 @@ class Follow(models.Model):
                 name='unique_follow'
             ),
             models.CheckConstraint(
-                condition=~models.Q(user=models.F('author')),
+                condition=~Q(user=F('author')),
                 name='prevent_self_follow'
-            )
+            ),
         ]
 
     def __str__(self):
