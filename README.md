@@ -57,5 +57,6 @@ docker-compose up --build
 # Frontend: http://localhost
 # API: http://localhost/api/
 # Документация API: http://localhost/api/docs/
+# Сайт: http://158.160.23.227
 
 # Данные Админа: superuser@mail.ru; Super1User1

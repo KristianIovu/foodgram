@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils.module_loading import import_string
 from rest_framework import serializers
 
 from recipes.models import Ingredient
@@ -32,6 +33,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True
     )
     tags = TagSerializer(many=True)
+    author = import_string('users.serializers.UserSerializer')(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
@@ -41,12 +43,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
-
-    def get_fields(self):
-        fields = super().get_fields()
-        from users.serializers import UserSerializer
-        fields['author'] = UserSerializer(read_only=True)
-        return fields
 
     def get_is_favorited(self, obj):
         """Проверить, добавлен ли рецепт в избранное текущим пользователем."""
@@ -151,7 +147,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         instance.tags.set(tags)
 
-        instance.recipe_ingredients.all().delete()
+        instance.ingredients.clear()
         # Для этой связи метод clear() не работает,
         # поэтому удаляем старые ингредиенты через delete().
         self.create_ingredients(instance, ingredients)

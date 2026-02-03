@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -189,7 +190,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         """Возвращает короткую ссылку на рецепт."""
         recipe = self.get_object()
-        url = request.build_absolute_uri(recipe.get_absolute_url())
+        url = f'{settings.FRONTEND_URL}/recipes/{recipe.id}'
         return Response({'short-link': url})
 
     def filter_queryset(self, queryset):
