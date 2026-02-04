@@ -63,7 +63,7 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        constraints = [
+        constraints =  [
             # Запрет на повторную подписку на автора
             models.UniqueConstraint(
                 fields=['user', 'author'],
