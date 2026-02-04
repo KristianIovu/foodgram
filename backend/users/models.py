@@ -6,34 +6,6 @@ import inspect
 from .constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
 
 
-def build_follow_constraints():
-    """
-    Создаёт ограничения для модели Follow
-    с учётом версии Django (check / condition).
-    """
-    expr = ~Q(user=F('author'))
-    params = inspect.signature(models.CheckConstraint).parameters
-
-    if 'check' in params:
-        check_constraint = models.CheckConstraint(
-            check=expr,
-            name='prevent_self_follow'
-        )
-    else:
-        check_constraint = models.CheckConstraint(
-            condition=expr,
-            name='prevent_self_follow'
-        )
-
-    return [
-        models.UniqueConstraint(
-            fields=['user', 'author'],
-            name='unique_follow'
-        ),
-        check_constraint,
-    ]
-
-
 class User(AbstractUser):
     """
     Кастомная модель пользователя.
@@ -92,7 +64,18 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        constraints = build_follow_constraints()
+        constraints = [
+            # Запрет на повторную подписку на автора
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_follow'
+            ),
+            # Запрет на подписку на самого себя
+            models.CheckConstraint(
+                check=~Q(user=F('author')),
+                name='prevent_self_follow'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} подписан на {self.author}'

@@ -190,7 +190,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         """Возвращает короткую ссылку на рецепт."""
         recipe = self.get_object()
-        url = f'{settings.FRONTEND_URL}/recipes/{recipe.id}'
+        url = request.build_absolute_uri(f'/recipes/{recipe.id}')
         return Response({'short-link': url})
 
     def filter_queryset(self, queryset):

@@ -47,6 +47,8 @@ services:
       - static_volume:/var/html/static:ro
       - media_volume:/var/html/media:ro
       - frontend_static:/usr/share/nginx/html:ro
+      - certbot_www:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
       - frontend
@@ -56,3 +58,4 @@ volumes:
   media_volume:
   static_volume:
   frontend_static:
+  certbot_www:

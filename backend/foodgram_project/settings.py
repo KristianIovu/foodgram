@@ -131,4 +131,4 @@ DJOSER = {
 AUTH_USER_MODEL = 'users.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL = 'http://localhost'
+FRONTEND_URL = 'https://158.160.23.227'

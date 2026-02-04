@@ -148,8 +148,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.set(tags)
 
         instance.ingredients.clear()
-        # Для этой связи метод clear() не работает,
-        # поэтому удаляем старые ингредиенты через delete().
         self.create_ingredients(instance, ingredients)
 
         return super().update(instance, validated_data)
