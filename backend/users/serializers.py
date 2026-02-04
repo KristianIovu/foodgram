@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from recipes.serializers.fields import Base64ImageField
+from recipes.serializers.recipe_serializers import ShortRecipeSerializer
 
 from .models import Follow
 
@@ -63,7 +64,6 @@ class FollowSerializer(UserSerializer):
             recipes = recipes[:int(recipes_limit)]
         else:
             recipes = recipes[:3]
-        from recipes.serializers.recipe_serializers import ShortRecipeSerializer
         return ShortRecipeSerializer(recipes, many=True,
                                      context=self.context).data
 

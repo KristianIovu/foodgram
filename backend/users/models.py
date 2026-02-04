@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q, F
-import inspect
 
 from .constants import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH
 
