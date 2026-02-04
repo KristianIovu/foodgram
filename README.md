@@ -54,9 +54,8 @@ cd foodgram/infra
 docker-compose up --build
 
 # Приложение будет доступно по адресу:
-# Frontend: http://localhost
-# API: http://localhost/api/
-# Документация API: http://localhost/api/docs/
-# Сайт: http://158.160.23.227
+# API: https://foodgramtop2026.ddns.net/api/
+# Документация API: https://foodgramtop2026.ddns.net/api/docs/
+# Сайт: https://foodgramtop2026.ddns.net
 
 # Данные Админа: superuser@mail.ru; Super1User1

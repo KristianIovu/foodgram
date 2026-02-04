@@ -59,4 +59,3 @@ volumes:
   media_volume:
   static_volume:
   frontend_static:
-  certbot_www:

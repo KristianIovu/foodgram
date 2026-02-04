@@ -131,4 +131,4 @@ DJOSER = {
 AUTH_USER_MODEL = 'users.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL = 'https://158.160.23.227'
+FRONTEND_URL = 'https://foodgramtop2026.ddns.net'
