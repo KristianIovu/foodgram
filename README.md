@@ -57,5 +57,3 @@ docker-compose up --build
 # API: https://foodgramtop2026.ddns.net/api/
 # Документация API: https://foodgramtop2026.ddns.net/api/docs/
 # Сайт: https://foodgramtop2026.ddns.net
-
-# Данные Админа: superuser@mail.ru; Super1User1
